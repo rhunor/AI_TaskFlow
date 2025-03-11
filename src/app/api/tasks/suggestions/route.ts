@@ -1,4 +1,4 @@
-// src/app/api/tasks/suggestions/route.ts
+// src/app/api/tasks/suggestions/route.ts - Fixed version
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { createServerClient } from '@supabase/ssr';
@@ -24,22 +24,28 @@ export async function GET(request: Request) {
       }
     );
 
-    const { data: { session } } = await supabase.auth.getSession();
+    // Use getUser instead of getSession
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
 
-    if (!session) {
+    if (userError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Get all incomplete tasks for the user
     const tasks = await prisma.task.findMany({
       where: {
-        userId: session.user.id,
-        isCompleted: false,
-      },
+        userId: user.id,
+        isCompleted: false
+      }
     });
 
-    // Get AI suggestions
-    const suggestions = await getPrioritySuggestions(tasks);
+    // If OpenAI API key is not set, return empty suggestions
+    if (!process.env.OPENAI_API_KEY) {
+      return NextResponse.json([]);
+    }
+
+    // Get AI suggestions (if there are tasks)
+    const suggestions = tasks.length > 0 ? await getPrioritySuggestions(tasks) : [];
 
     return NextResponse.json(suggestions);
   } catch (error) {

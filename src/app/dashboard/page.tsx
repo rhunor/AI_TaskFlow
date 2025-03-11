@@ -10,6 +10,10 @@ import TaskList from '@/components/tasks/TaskList';
 import CompletedTasksList from '@/components/tasks/CompletedTasksList';
 import TaskForm from '@/components/tasks/TaskForm';
 import { confetti } from '@/lib/confetti';
+import Header from '@/components/layout/Header';
+import Footer from '@/components/layout/Footer';
+import { useAuth } from '@/app/providers';
+import { useTheme } from '@/components/ui/ThemeProvider';
 
 interface TasksByStatus {
   completed: Task[];
@@ -30,6 +34,8 @@ interface Suggestion {
 }
 
 const DashboardPage = () => {
+  const { user, signOut } = useAuth();
+  const { theme, setTheme } = useTheme();
   const [isLoading, setIsLoading] = useState(true);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [tasksByStatus, setTasksByStatus] = useState<TasksByStatus>({
@@ -220,7 +226,7 @@ const DashboardPage = () => {
     // Moving within the same list
     if (destination.droppableId === source.droppableId) {
       const listKey = source.droppableId.split('-')[1] as SeverityLevel;
-      const list = [...tasksByStatus.incompleteByPriority[listKey]];
+      const list = [...tasksByStatus.incompleteByPriority[listKey as keyof typeof tasksByStatus.incompleteByPriority]];
       const [movedTask] = list.splice(source.index, 1);
       list.splice(destination.index, 0, movedTask);
 
@@ -260,8 +266,8 @@ const DashboardPage = () => {
       const sourceListKey = source.droppableId.split('-')[1] as SeverityLevel;
       const destListKey = destination.droppableId.split('-')[1] as SeverityLevel;
       
-      const sourceList = [...tasksByStatus.incompleteByPriority[sourceListKey]];
-      const destList = [...tasksByStatus.incompleteByPriority[destListKey]];
+      const sourceList = [...tasksByStatus.incompleteByPriority[sourceListKey as keyof typeof tasksByStatus.incompleteByPriority]];
+      const destList = [...tasksByStatus.incompleteByPriority[destListKey as keyof typeof tasksByStatus.incompleteByPriority]];
       
       // Remove from source list
       const [movedTask] = sourceList.splice(source.index, 1);
@@ -362,31 +368,48 @@ const DashboardPage = () => {
   
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <Loader2 className="h-8 w-8 text-blue-500 animate-spin" />
-        <span className="ml-2 text-gray-600">Loading your tasks...</span>
+      <div className="flex flex-col min-h-screen">
+        <Header 
+          user={user || null} 
+          onLogout={signOut} 
+          isDarkMode={theme === 'dark'} 
+          toggleTheme={() => setTheme(theme === 'dark' ? 'light' : 'dark')} 
+        />
+        <div className="flex items-center justify-center flex-1">
+          <Loader2 className="h-8 w-8 text-blue-500 animate-spin" />
+          <span className="ml-2 text-gray-600 dark:text-gray-300">Loading your tasks...</span>
+        </div>
+        <Footer />
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50">
+    <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900">
+      {/* Include the Header component */}
+      <Header 
+        user={user || null} 
+        onLogout={signOut} 
+        isDarkMode={theme === 'dark'} 
+        toggleTheme={() => setTheme(theme === 'dark' ? 'light' : 'dark')} 
+      />
+
       {/* Header with stats */}
-      <div className="bg-white border-b shadow-sm">
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-            <h1 className="text-2xl font-bold text-gray-900">My Tasks</h1>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">My Tasks</h1>
             
             <div className="flex items-center space-x-6 mt-4 md:mt-0">
               {/* Progress */}
               <div className="flex items-center">
-                <div className="h-2 w-32 bg-gray-200 rounded-full overflow-hidden">
+                <div className="h-2 w-32 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                   <div 
                     className="h-full bg-blue-500 rounded-full"
                     style={{ width: `${progressPercentage}%` }}
                   />
                 </div>
-                <span className="ml-2 text-sm font-medium text-gray-600">
+                <span className="ml-2 text-sm font-medium text-gray-600 dark:text-gray-300">
                   {completedTasks} / {totalTasks} ({progressPercentage}%)
                 </span>
               </div>
@@ -394,7 +417,7 @@ const DashboardPage = () => {
               {/* Streak */}
               <div className="flex items-center text-sm">
                 <Trophy className="h-4 w-4 text-yellow-500 mr-1" />
-                <span className="font-medium">{streakInfo.current} day streak</span>
+                <span className="font-medium text-gray-700 dark:text-gray-200">{streakInfo.current} day streak</span>
               </div>
               
               {/* Add task button */}
@@ -431,21 +454,21 @@ const DashboardPage = () => {
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: "auto" }}
                 exit={{ opacity: 0, height: 0 }}
-                className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4"
+                className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-4"
               >
-                <h3 className="font-medium text-blue-800 mb-2">Suggested tasks to focus on today:</h3>
+                <h3 className="font-medium text-blue-800 dark:text-blue-200 mb-2">Suggested tasks to focus on today:</h3>
                 <div className="space-y-2">
                   {suggestions.map((suggestion) => (
-                    <div key={suggestion.id} className="flex items-start bg-white p-3 rounded-md border border-blue-200">
+                    <div key={suggestion.id} className="flex items-start bg-white dark:bg-gray-800 p-3 rounded-md border border-blue-200 dark:border-blue-700">
                       <div className="flex-1">
                         <div className="flex items-center">
                           <span className={`inline-block w-2 h-2 rounded-full mr-2 ${
                             suggestion.severity === 'HIGH' ? 'bg-red-500' : 
                             suggestion.severity === 'MEDIUM' ? 'bg-yellow-500' : 'bg-green-500'
                           }`} />
-                          <h4 className="font-medium">{suggestion.title}</h4>
+                          <h4 className="font-medium dark:text-white">{suggestion.title}</h4>
                         </div>
-                        <p className="text-sm text-gray-600 mt-1">{suggestion.reason}</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">{suggestion.reason}</p>
                       </div>
                     </div>
                   ))}
@@ -501,6 +524,9 @@ const DashboardPage = () => {
           onEditTask={(task) => handleOpenTaskForm(undefined, task)}
         />
       </div>
+
+      {/* Include the Footer component */}
+      <Footer />
 
       {/* Task Form Modal */}
       <AnimatePresence>

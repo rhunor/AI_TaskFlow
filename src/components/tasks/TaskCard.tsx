@@ -37,7 +37,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, index, onComplete, onDelete, 
           exit={{ opacity: 0, scale: 0.95 }}
           transition={{ duration: 0.2 }}
           className={`p-3 mb-2 rounded-lg border ${
-            severityColors[task.severity as SeverityLevel]
+            severityColors[task.severity as keyof typeof severityColors]
           } ${snapshot.isDragging ? 'shadow-lg' : 'shadow-sm'} ${
             task.isCompleted ? 'opacity-70' : 'opacity-100'
           }`}
