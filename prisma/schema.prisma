@@ -1,0 +1,80 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  name          String?
+  password      String? // Will be null for social logins
+  avatarUrl     String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  tasks         Task[]
+  streaks       Streak?
+  badges        Badge[]
+  settings      Settings?
+}
+
+model Task {
+  id             String       @id @default(uuid())
+  title          String
+  description    String?
+  dueDate        DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  completedAt    DateTime?
+  severity       SeverityLevel
+  isCompleted    Boolean      @default(false)
+  position       Int          @default(0) // For drag and drop ordering
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Streak {
+  id            String    @id @default(uuid())
+  currentStreak Int       @default(0)
+  longestStreak Int       @default(0)
+  lastActiveDate DateTime?
+  userId        String    @unique
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Badge {
+  id          String    @id @default(uuid())
+  name        String
+  description String
+  imageUrl    String
+  earnedAt    DateTime  @default(now())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Settings {
+  id              String  @id @default(uuid())
+  theme           Theme   @default(LIGHT)
+  enableAnimations Boolean @default(true)
+  userId          String  @unique
+  user            User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+enum SeverityLevel {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum Theme {
+  LIGHT
+  DARK
+  SYSTEM
+}
